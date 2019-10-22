@@ -5,6 +5,7 @@ import com.library.parkingtoll.model.CarResponse;
 import com.library.parkingtoll.model.ParkingRequest;
 import com.library.parkingtoll.model.ParkingResponse;
 import com.library.parkingtoll.model.ParkingSlotRequest;
+import com.library.parkingtoll.model.ParkingSlotResponse;
 import com.library.parkingtoll.model.PriceRequest;
 import com.library.parkingtoll.model.PriceResponse;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -45,7 +48,7 @@ public class ParkingTollTest {
         CarRequest carRequestStandard = new CarRequest();
         carRequestStandard.setType(CarType.STANDARD);
         ResponseEntity<CarResponse> carResponseStandard = this.restTemplate.postForEntity("http://localhost:" + port + "/parking/" + PARKING + "/parkCar", carRequestStandard, CarResponse.class);
-        String slotId = carResponseStandard.getBody().getSlotId();
+        String slotId = Objects.requireNonNull(carResponseStandard.getBody()).getSlotId();
 
         for (int i = 0; i < 3; i++) {
             ResponseEntity<CarResponse> otherCarResponseStandard = this.restTemplate.postForEntity("http://localhost:" + port + "/parking/" + PARKING + "/parkCar", carRequestStandard, CarResponse.class);
@@ -60,12 +63,24 @@ public class ParkingTollTest {
         /* Park car with no slot available */
         ResponseEntity<CarResponse> carResponseEV50kwSecondTime = this.restTemplate.postForEntity("http://localhost:" + port + "/parking/" + PARKING + "/parkCar", carRequestEV50kw, CarResponse.class);
         assertTrue(carResponseEV50kwSecondTime.getStatusCode().is4xxClientError());
-        assertEquals("Parking slot not found", carResponseEV50kwSecondTime.getBody().getMessage());
+        assertEquals("Parking slot not found", Objects.requireNonNull(carResponseEV50kwSecondTime.getBody()).getMessage());
 
         /* Trying to create a parking with the same id */
         ResponseEntity<ParkingResponse> parkingResponseSecondTime = this.restTemplate.postForEntity("http://localhost:" + port + "/createParking", parkingRequest, ParkingResponse.class);
         assertTrue(parkingResponseSecondTime.getStatusCode().is4xxClientError());
-        assertEquals("Parking [PARKING] already exist!", parkingResponseSecondTime.getBody().getMessage());
+        assertEquals("Parking [PARKING] already exist!", Objects.requireNonNull(parkingResponseSecondTime.getBody()).getMessage());
+
+        /* Retrieve the parking status */
+        ResponseEntity<ParkingResponse> parkingResponseStatus = this.restTemplate.getForEntity("http://localhost:" + port + "/parking/" + PARKING, ParkingResponse.class);
+        assertTrue(parkingResponseStatus.getStatusCode().is2xxSuccessful());
+        List<ParkingSlotResponse> parkingSlots = Objects.requireNonNull(parkingResponseStatus.getBody()).getParkingSlots();
+        assertEquals(1, parkingSlots.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.STANDARD).filter(ParkingSlotResponse::isAvailable).count());
+        assertEquals(4, parkingSlots.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.STANDARD).filter(parkingSlotResponse -> !parkingSlotResponse.isAvailable()).count());
+        assertEquals(2, parkingSlots.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.ELECTRIC_POWERED_20_KW).filter(ParkingSlotResponse::isAvailable).count());
+        assertEquals(0, parkingSlots.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.ELECTRIC_POWERED_20_KW).filter(parkingSlotResponse -> !parkingSlotResponse.isAvailable()).count());
+        assertEquals(0, parkingSlots.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.ELECTRIC_POWERED_50_KW).filter(ParkingSlotResponse::isAvailable).count());
+        assertEquals(1, parkingSlots.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.ELECTRIC_POWERED_50_KW).filter(parkingSlotResponse -> !parkingSlotResponse.isAvailable()).count());
+
 
         /* Take a car from a fake parking */
         ResponseEntity<PriceResponse> priceResponseFakeParking = this.restTemplate.getForEntity("http://localhost:" + port + "/parking/FAKE_PARKING/takeCar/" + slotId, PriceResponse.class);
@@ -79,7 +94,19 @@ public class ParkingTollTest {
         /* Take first car entered */
         ResponseEntity<PriceResponse> priceResponse = this.restTemplate.getForEntity("http://localhost:" + port + "/parking/" + PARKING + "/takeCar/" + slotId, PriceResponse.class);
         assertTrue(priceResponse.getStatusCode().is2xxSuccessful());
-        assertEquals(5, priceResponse.getBody().getPricing());
+        assertEquals(5, Objects.requireNonNull(priceResponse.getBody()).getPricing());
+
+        /* Retrieve the parking status */
+        ResponseEntity<ParkingResponse> parkingResponseStatusAfterLeave = this.restTemplate.getForEntity("http://localhost:" + port + "/parking/" + PARKING, ParkingResponse.class);
+        assertTrue(parkingResponseStatusAfterLeave.getStatusCode().is2xxSuccessful());
+        List<ParkingSlotResponse> parkingSlots1 = Objects.requireNonNull(parkingResponseStatusAfterLeave.getBody()).getParkingSlots();
+        assertEquals(2, parkingSlots1.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.STANDARD).filter(ParkingSlotResponse::isAvailable).count());
+        assertEquals(3, parkingSlots1.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.STANDARD).filter(parkingSlotResponse -> !parkingSlotResponse.isAvailable()).count());
+        assertEquals(2, parkingSlots1.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.ELECTRIC_POWERED_20_KW).filter(ParkingSlotResponse::isAvailable).count());
+        assertEquals(0, parkingSlots1.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.ELECTRIC_POWERED_20_KW).filter(parkingSlotResponse -> !parkingSlotResponse.isAvailable()).count());
+        assertEquals(0, parkingSlots1.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.ELECTRIC_POWERED_50_KW).filter(ParkingSlotResponse::isAvailable).count());
+        assertEquals(1, parkingSlots1.stream().filter(parkingSlotResponse -> parkingSlotResponse.getCarType() == CarType.ELECTRIC_POWERED_50_KW).filter(parkingSlotResponse -> !parkingSlotResponse.isAvailable()).count());
+
 
     }
 

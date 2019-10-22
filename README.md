@@ -73,7 +73,12 @@ curl -d '{
                 ]
          }' -H "Content-Type: application/json" -X POST http://localhost:8080/createParking
 ```
-
+### Retrieve parking
+* URL `/parking/PARKING_NAME` where PARKING_NAME is the name or the id of the parking 
+* Curl example
+```
+curl http://localhost:8080/parking/parking
+```
 ### Park a car
 * Request structure
 ```

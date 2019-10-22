@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @ApiModel(description = "All details about the Parking Response.")
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -18,8 +20,13 @@ public class ParkingResponse extends CommonResponse {
             notes = "A unique identifier of the parking",
             example = "e0e1ce73-d8ec-43b2-81f2-d938aff7cdb1",
             required = true)
-
     private String parkingId;
+
+    @ApiModelProperty(
+            notes = "The list of parking slot",
+            required = true
+    )
+    private List<ParkingSlotResponse> parkingSlots;
 
     public ParkingResponse(String message) {
         this.message = message;

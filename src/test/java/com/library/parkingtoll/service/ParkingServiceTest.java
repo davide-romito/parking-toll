@@ -41,7 +41,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void createParking() throws PricingPolicyException, ParkingAlreadyExistException {
+    void testCreateParking() throws PricingPolicyException, ParkingAlreadyExistException {
         ParkingRequest parkingRequest = buildParkingRequest(PARKING_NAME, HOURLY, 10, 5, 1);
         ParkingResponse parkingResponse = parkingService.createParking(parkingRequest);
 
@@ -49,7 +49,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void createParkingWithoutName() throws PricingPolicyException, ParkingAlreadyExistException {
+    void testCreateParkingWithoutName() throws PricingPolicyException, ParkingAlreadyExistException {
         ParkingRequest parkingRequest = buildParkingRequest(null, HOURLY, 25, 2, 2);
         ParkingResponse parkingResponse = parkingService.createParking(parkingRequest);
 
@@ -57,7 +57,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void createParkingWithNameAlreadyPresent() {
+    void testCreateParkingWithNameAlreadyPresent() {
         Map<String, Parking> parkingMap = Collections.singletonMap(PARKING_NAME, new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build()));
         ReflectionTestUtils.setField(parkingService, "map", parkingMap);
 
@@ -67,14 +67,29 @@ class ParkingServiceTest {
     }
 
     @Test
-    void createParkingWithPricingPolicyNotImplemented() {
+    void testCreateParkingWithPricingPolicyNotImplemented() {
         ParkingRequest parkingRequest = buildParkingRequest(null, "MINUTE", 10, 5, 1);
 
         assertThrows(PricingPolicyException.class, () -> parkingService.createParking(parkingRequest));
     }
 
     @Test
-    void parkCar() throws ParkingNotFoundException, ParkingSlotException {
+    void testGetParking() throws ParkingNotFoundException {
+        Map<String, Parking> parkingMap = Collections.singletonMap(PARKING_NAME, new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build()));
+        ReflectionTestUtils.setField(parkingService, "map", parkingMap);
+        ParkingResponse parking = parkingService.getParking(PARKING_NAME);
+
+        assertEquals(PARKING_NAME, parking.getParkingId());
+    }
+
+    @Test
+    void testGetParkingNotPresent() {
+        assertThrows(ParkingNotFoundException.class, () -> parkingService.getParking("parking"));
+    }
+
+
+    @Test
+    void testParkCar() throws ParkingNotFoundException, ParkingSlotException {
         Parking parking = new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build());
         parking.addParkingSlotByType(CarType.STANDARD, 5);
         Map<String, Parking> parkingMap = Collections.singletonMap(PARKING_NAME, parking);
@@ -90,7 +105,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void parkCarCheckEVType() throws ParkingNotFoundException, ParkingSlotException {
+    void testParkCarCheckEVType() throws ParkingNotFoundException, ParkingSlotException {
         Parking parking = new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build());
         parking.addParkingSlotByType(CarType.ELECTRIC_POWERED_20_KW, 2);
         parking.addParkingSlotByType(CarType.ELECTRIC_POWERED_50_KW, 2);
@@ -107,7 +122,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void parkCarNotExistingParking() {
+    void testParkCarNotExistingParking() {
         Parking parking = new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build());
         parking.addParkingSlotByType(CarType.STANDARD, 5);
         Map<String, Parking> parkingMap = Collections.singletonMap(PARKING_NAME, parking);
@@ -120,7 +135,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void parkCarNotAvailableSlot() {
+    void testParkCarNotAvailableSlot() {
         Parking parking = new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build());
         parking.addParkingSlotByType(CarType.STANDARD, 0);
         Map<String, Parking> parkingMap = Collections.singletonMap(PARKING_NAME, parking);
@@ -133,7 +148,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void takeCar() throws ParkingSlotException, ParkingNotFoundException {
+    void testTakeCar() throws ParkingSlotException, ParkingNotFoundException {
         Parking parking = new Parking(PARKING_NAME, HourlyPricingPolicy.builder().hourPrice(2).build());
         parking.addParkingSlotByType(CarType.STANDARD, 5);
         LocalDateTime arrivalTime = LocalDateTime.now().minusMinutes(50);
@@ -150,7 +165,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void takeCarNotExistingParking() {
+    void testTakeCarNotExistingParking() {
         Parking parking = new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build());
         parking.addParkingSlotByType(CarType.STANDARD, 3);
         Map<String, Parking> parkingMap = Collections.singletonMap(PARKING_NAME, parking);
@@ -160,7 +175,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void takeCarNotExistingSlot() {
+    void testTakeCarNotExistingSlot() {
         Parking parking = new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build());
         parking.addParkingSlotByType(CarType.STANDARD, 3);
         Map<String, Parking> parkingMap = Collections.singletonMap(PARKING_NAME, parking);
@@ -170,7 +185,7 @@ class ParkingServiceTest {
     }
 
     @Test
-    void takeCarNotOccupiedSlot() {
+    void testTakeCarNotOccupiedSlot() {
         Parking parking = new Parking(PARKING_NAME, HourlyPricingPolicy.builder().build());
         parking.addParkingSlotByType(CarType.STANDARD, 3);
         Map<String, Parking> parkingMap = Collections.singletonMap(PARKING_NAME, parking);

@@ -1,9 +1,11 @@
 package com.library.parkingtoll.service;
 
+import com.library.parkingtoll.CarType;
 import com.library.parkingtoll.model.CarRequest;
 import com.library.parkingtoll.model.CarResponse;
 import com.library.parkingtoll.model.ParkingRequest;
 import com.library.parkingtoll.model.ParkingResponse;
+import com.library.parkingtoll.model.ParkingSlotResponse;
 import com.library.parkingtoll.model.PriceResponse;
 import com.library.parkingtoll.service.parking.Parking;
 import com.library.parkingtoll.service.parking.ParkingSlot;
@@ -18,8 +20,11 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,8 +53,37 @@ public class ParkingService {
         parkingRequest.getParkingSlots().forEach(parkingSlot -> parking.addParkingSlotByType(parkingSlot.getType(), parkingSlot.getAvailableSpot()));
         map.put(parking.getParkingId(), parking);
 
+        return buildParkingResponse(parking);
+    }
+
+    /**
+     * Method to retrieve the parking, and the current status of the parking slots
+     * @return Parking response of a given parkingId
+     * @throws ParkingNotFoundException in case the parking identified with parkingId doesn't exist
+     */
+    public ParkingResponse getParking(String parkingId) throws ParkingNotFoundException {
+        parkingValidation(parkingId);
+        Parking parking = map.get(parkingId);
+        return buildParkingResponse(parking);
+    }
+
+    private ParkingResponse buildParkingResponse(Parking parking) {
         ParkingResponse parkingResponse = new ParkingResponse();
         parkingResponse.setParkingId(parking.getParkingId());
+        List<ParkingSlotResponse> list = new ArrayList<>();
+        for (Map.Entry<CarType, Set<ParkingSlot>> carTypeSetEntry : parking.getSlotsByType().entrySet()) {
+            carTypeSetEntry.getValue().stream()
+                    .sorted(Comparator.comparingInt(o -> Integer.parseInt(o.getSlot())))
+                    .map(parkingSlot -> {
+                        ParkingSlotResponse parkingSlotResponse = new ParkingSlotResponse(parkingSlot.getSlot(), carTypeSetEntry.getKey(), parkingSlot.isAvailable());
+                        if (parkingSlot.getTakenTime() != null){
+                            parkingSlotResponse.setArrivalTime(parkingSlot.getTakenTime().format(DATETIME_FORMATTER));
+                        }
+                        return parkingSlotResponse;
+                    })
+                    .forEach(list::add);
+        }
+        parkingResponse.setParkingSlots(list);
         return parkingResponse;
     }
 

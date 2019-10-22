@@ -56,19 +56,26 @@ class ControllerTest {
     }
 
     @Test
-    void createParking() throws Exception {
+    void testCreateParking() throws Exception {
         Mockito.when(parkingService.createParking(any(ParkingRequest.class))).thenReturn(new ParkingResponse());
         this.mockMvc.perform(post("/createParking").contentType(MediaType.APPLICATION_JSON_VALUE).content(PARKING_REQUEST)).andDo(print()).andExpect(status().isOk());
     }
 
     @Test
-    void parkCar() throws Exception {
+    void testGetParking() throws Exception {
+        Mockito.when(parkingService.getParking(anyString())).thenReturn(new ParkingResponse());
+        this.mockMvc.perform(get("/parking/parkingId").content(CAR_REQUEST)).andDo(print()).andExpect(status().isOk());
+    }
+
+
+    @Test
+    void testParkCar() throws Exception {
         Mockito.when(parkingService.parkCar(anyString(), any(CarRequest.class))).thenReturn(new CarResponse());
         this.mockMvc.perform(post("/parking/parkingId/parkCar").accept(MediaType.APPLICATION_JSON_VALUE).contentType(MediaType.APPLICATION_JSON_VALUE).content(CAR_REQUEST)).andDo(print()).andExpect(status().isOk());
     }
 
     @Test
-    void takeCar() throws Exception {
+    void testTakeCar() throws Exception {
         Mockito.when(parkingService.takeCar(anyString(), anyString())).thenReturn(new PriceResponse());
         this.mockMvc.perform(get("/parking/parkingId/takeCar/5")).andDo(print()).andExpect(status().isOk());
 

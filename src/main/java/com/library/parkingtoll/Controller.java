@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Api(
         value = "Parking Toll API",
-        tags = {"Parking-Toll "}
+        tags = {"Parking-Toll"}
 )
 @Log4j2
 @RestController
@@ -80,6 +80,36 @@ public class Controller {
         }
     }
 
+    @ApiOperation(value = "Retrieve the parking status")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(
+                            code = 200,
+                            response = CarResponse.class,
+                            message = "OK - We sent back the ParkingResponse."
+                    ),
+                    @ApiResponse(
+                            code = 404,
+                            response = CarResponse.class,
+                            message = "Error: Parking not found"
+                    )
+            }
+    )
+    @GetMapping(value = "parking/{parkingId}")
+    public ResponseEntity<ParkingResponse> getParking(
+            @ApiParam(value = "Id of the chosen parking", required = true) @PathVariable(name = "parkingId") String parkingId) {
+        ParkingResponse response;
+        try {
+            response = parkingService.getParking(parkingId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (ParkingNotFoundException e) {
+            log.error(e.getMessage());
+            response = new ParkingResponse(e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
     @ApiOperation(value = "Park a car")
     @ApiResponses(
             value = {
@@ -91,7 +121,7 @@ public class Controller {
                     @ApiResponse(
                             code = 404,
                             response = CarResponse.class,
-                            message = "Error: Parking not found - issue on our side"
+                            message = "Error: Parking not found"
                     ),
                     @ApiResponse(
                             code = 400,
@@ -131,7 +161,7 @@ public class Controller {
                     @ApiResponse(
                             code = 404,
                             response = PriceResponse.class,
-                            message = "Error: Parking not found - issue on our side"
+                            message = "Error: Parking not found"
                     ),
                     @ApiResponse(
                             code = 400,
