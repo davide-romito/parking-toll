@@ -45,13 +45,13 @@ The API documentation is being published on Swagger. There are two main endpoint
 * `PARKING_NAME` : optional parking name
 * `PRICING_POLICY` : mandatory. Can be FIX_PLUS_HOURLY or HOURLY 
 * `HOUR_RATE` : mandatory. Float value 
-* `FIX_RATE` : optional. Float value 
+* `FIX_RATE` : mandatory only if PRICING_POLICY is FIX_PLUS_HOURLY. Float value 
 * `CAR_TYPE` : mandatory. Can be STANDARD, ELECTRIC_POWERED_20_KW, ELECTRIC_POWERED_50_KW
 * `NUMBER_OF_SPOTS` : mandatory. Number of spot
 * Curl example
 ```
 curl -d '{
-            "parkingName": "parking",
+            "parkingName": "parking_sophia",
             "pricingPolicy":"FIX_PLUS_HOURLY",
             "price": {
                 "hourRate" : 5.0,
@@ -77,7 +77,7 @@ curl -d '{
 * URL `/parking/PARKING_NAME` where PARKING_NAME is the name or the id of the parking 
 * Curl example
 ```
-curl http://localhost:8080/parking/parking
+curl http://localhost:8080/parking/parking_sophia
 ```
 ### Park a car
 * Request structure
@@ -92,7 +92,7 @@ curl http://localhost:8080/parking/parking
 ```
 curl -d '{
             "type" : "STANDARD"
-         }' -H "Content-Type: application/json" -X POST http://localhost:8080/parking/parking/parkCar
+         }' -H "Content-Type: application/json" -X POST http://localhost:8080/parking/parking_sophia/parkCar
 
 ```
 ### Take a car
@@ -100,5 +100,5 @@ curl -d '{
 and PARKING_SLOT_ID is the id of the slot where the car is parked 
 * Curl example
 ```
-curl http://localhost:8080/parking/parking/takeCar/1
+curl http://localhost:8080/parking/parking_sophia/takeCar/1
 ```
